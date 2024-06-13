@@ -1,73 +1,80 @@
 import logging
 import os
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from starlette.requests import Request
 import Worker_completed as worker  # Import the worker module
 
-# Initialize Flask app and CORS
-app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
-app.logger.setLevel(logging.DEBUG)  # Set logging to debug level for more detailed output
+# Initialize FastAPI app and CORS
+app = FastAPI()
+
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Ensure the uploads directory exists
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+templates = Jinja2Templates(directory="/backend/templates")
 
 # Define the route for the index page
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')  # Render the index.html template
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # Define the route for processing messages
-@app.route('/process-message', methods=['POST'])
-def process_message_route():
-    user_message = request.json.get('userMessage', '')  # Extract the user's message from the request
-    app.logger.debug(f"user_message: {user_message}")
+@app.post("/process-message")
+async def process_message_route(userMessage: str = Form(...)):
+    logger.debug(f"user_message: {userMessage}")
 
-    if not user_message:
-        return jsonify({"botResponse": "Please provide a message to process."}), 400
+    if not userMessage:
+        raise HTTPException(status_code=400, detail="Please provide a message to process.")
 
     try:
-        bot_response = worker.process_prompt(user_message)  # Process the user's message using the worker module
-        return jsonify({"botResponse": bot_response}), 200
+        bot_response = worker.process_prompt(userMessage)  # Process the user's message using the worker module
+        return JSONResponse(content={"botResponse": bot_response}, status_code=200)
     except Exception as e:
-        app.logger.error(f"Error processing message: {e}")
-        return jsonify({"botResponse": "There was an error processing your message."}), 500
+        logger.error(f"Error processing message: {e}")
+        raise HTTPException(status_code=500, detail="There was an error processing your message.")
 
 # Define the route for processing documents
-@app.route('/process-document', methods=['POST'])
-def process_document_route():
-    # Check if a file was uploaded
-    if 'file' not in request.files:
-        return jsonify({
-            "botResponse": "It seems like the file was not uploaded correctly, can you try again. "
-                           "If the problem persists, try using a different file"
-        }), 400
-
-    file = request.files['file']  # Extract the uploaded file from the request
-
+@app.post("/process-document")
+async def process_document_route(file: UploadFile = File(...)):
     if file.filename == '':
-        return jsonify({"botResponse": "No file selected. Please try again."}), 400
+        raise HTTPException(status_code=400, detail="No file selected. Please try again.")
 
     # Define the path where the file will be saved in the uploads directory
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
 
     try:
-        app.logger.debug(f"Saving file to {file_path}")
-        file.save(file_path)  # Save the file
-        app.logger.debug(f"File saved successfully to {file_path}")
+        logger.debug(f"Saving file to {file_path}")
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+        logger.debug(f"File saved successfully to {file_path}")
 
         worker.process_document(file_path)  # Process the document using the worker module
 
-        return jsonify({
+        return JSONResponse(content={
             "botResponse": "Thank you for providing your PDF document. I have analyzed it, so now you can ask me any "
                            "questions regarding it!"
-        }), 200
+        }, status_code=200)
     except Exception as e:
-        app.logger.error(f"Error saving or processing document: {e}")
-        return jsonify({"botResponse": "There was an error processing your document."}), 500
+        logger.error(f"Error saving or processing document: {e}")
+        raise HTTPException(status_code=500, detail="There was an error processing your document.")
 
-# Run the Flask app
+# Run the FastAPI app using Uvicorn
 if __name__ == "__main__":
-    app.run(debug=True, port=8000, host='0.0.0.0')
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")

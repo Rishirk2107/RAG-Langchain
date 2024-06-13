@@ -1,0 +1,11 @@
+Flask
+Flask-Cors
+torch
+langchain-core
+langchain-community
+HuggingFaceInstructEmbeddings
+HuggingFaceEndpoint
+PyPDFLoader
+Chroma
+sentence-transformers
+dotenv

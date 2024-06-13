@@ -1,5 +1,6 @@
 import os
 import torch
+from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
@@ -7,6 +8,9 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import HuggingFaceEndpoint
+
+#Load env variables
+load_dotenv()
 
 # Check for GPU availability and set the appropriate device for computation.
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -21,7 +25,7 @@ def init_llm():
     global llm_hub, embeddings
 
     # Set up the environment variable for HuggingFace and initialize the desired model
-    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv('HUGGING_FACE_TOKEN')
     model_id = "google/gemma-1.1-2b-it"
     
     # Initialize the model with the correct task without overriding
