@@ -60,6 +60,15 @@ function App() {
         <input type="file" accept="application/pdf" onChange={handleFileChange} />
         <button onClick={handleUpload}>Upload PDF</button>
       </div>
+      
+      <div>
+        {chatMessages.map((message, index) => (
+          <div key={index} className={`message ${message.sender}`}>
+            <strong>{message.sender === 'user' ? 'You' : 'Bot'}: </strong>
+            <span>{message.text}</span>
+          </div>
+        ))}
+      </div>
       <div>
         <input
           type="text"
@@ -68,14 +77,6 @@ function App() {
           placeholder="Ask a question about the PDF"
         />
         <button onClick={handleSendMessage}>Send</button>
-      </div>
-      <div>
-        {chatMessages.map((message, index) => (
-          <div key={index} className={`message ${message.sender}`}>
-            <strong>{message.sender === 'user' ? 'You' : 'Bot'}: </strong>
-            <span>{message.text}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
