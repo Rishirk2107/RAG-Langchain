@@ -1,11 +1,9 @@
-Flask
-Flask-Cors
+fastapi
 torch
 langchain-core
 langchain-community
-HuggingFaceInstructEmbeddings
-HuggingFaceEndpoint
-PyPDFLoader
-Chroma
+pypdf
+chromadb
 sentence-transformers
-dotenv
+python-dotenv
+InstructorEmbedding
