@@ -3,7 +3,8 @@ torch
 langchain-core
 langchain-community
 pypdf
-chromadb
-sentence-transformers
+chromadb==0.3.29
+sentence-transformers==2.2.2
 python-dotenv
 InstructorEmbedding
+pyproject-toml
