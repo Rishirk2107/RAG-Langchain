@@ -10,6 +10,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import HuggingFaceEndpoint
 
+#Streamlit
+
 # Load environment variables from .env file
 load_dotenv()
 
