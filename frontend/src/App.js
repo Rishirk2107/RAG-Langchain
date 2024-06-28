@@ -9,6 +9,7 @@ function App() {
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
+    console.log(e.target.files[0]);
   };
 
   const handleUpload = async () => {
@@ -19,6 +20,7 @@ function App() {
 
     const formData = new FormData();
     formData.append('file', file);
+    console.log(file);
 
     try {
       const response = await axios.post('http://localhost:8000/process-document', formData, {
